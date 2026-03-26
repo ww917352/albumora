@@ -14,5 +14,6 @@ export const api = {
     get<{ results: import('../types').SearchResult[] }>(
       `/search?q=${encodeURIComponent(q)}`,
     ),
+  albumBase: (itunesId: number) => get<import('../types').Album>(`/album/${itunesId}/base`),
   album: (itunesId: number) => get<import('../types').Album>(`/album/${itunesId}`),
 };

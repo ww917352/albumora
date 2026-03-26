@@ -65,6 +65,7 @@ export function SearchBox() {
           )}
           autoComplete="off"
           spellCheck={false}
+          autoFocus
         />
         {loading && (
           <Spinner className="absolute right-4 text-white/40" />

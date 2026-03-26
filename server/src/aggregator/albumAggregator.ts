@@ -13,6 +13,29 @@ function buildPurchaseLinks(title: string, artist: string) {
   };
 }
 
+/** Fast path: iTunes metadata + colour palette only (~400ms). No lyrics/wiki/label. */
+export async function aggregateAlbumBase(itunesId: number): Promise<Album> {
+  const base = await getAlbumById(itunesId);
+  const palette = await extractPalette(base.artworkUrl);
+
+  return {
+    itunesId: base.itunesId,
+    title: base.title,
+    artist: base.artist,
+    releaseYear: base.releaseYear,
+    releaseDate: base.releaseDate,
+    label: null,
+    genre: base.genre,
+    artworkUrl: base.artworkUrl,
+    appleMusicUrl: base.appleMusicUrl,
+    purchaseLinks: buildPurchaseLinks(base.title, base.artist),
+    palette,
+    tracks: base.tracks, // lyrics: null for each track
+    wikipedia: null,
+    totalTracks: base.totalTracks,
+  };
+}
+
 export async function aggregateAlbum(itunesId: number): Promise<Album> {
   // Step 1: get base data from iTunes
   const base = await getAlbumById(itunesId);

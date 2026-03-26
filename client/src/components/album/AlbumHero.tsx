@@ -3,6 +3,7 @@ import { PurchaseLinks } from './PurchaseLinks';
 
 interface Props {
   album: Album;
+  isEnriching?: boolean;
 }
 
 function formatDuration(ms: number): string {
@@ -19,7 +20,7 @@ function totalDuration(tracks: Album['tracks']): string | null {
   return formatDuration(total);
 }
 
-export function AlbumHero({ album }: Props) {
+export function AlbumHero({ album, isEnriching }: Props) {
   const duration = totalDuration(album.tracks);
 
   return (
@@ -55,12 +56,17 @@ export function AlbumHero({ album }: Props) {
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/55">
             {album.releaseYear && <span>{album.releaseYear}</span>}
-            {album.label && (
+            {album.label ? (
               <>
                 <span className="text-white/25">·</span>
                 <span>{album.label}</span>
               </>
-            )}
+            ) : isEnriching ? (
+              <>
+                <span className="text-white/25">·</span>
+                <span className="inline-block h-3 w-20 bg-white/15 rounded animate-pulse" />
+              </>
+            ) : null}
             {album.genre && (
               <>
                 <span className="text-white/25">·</span>
