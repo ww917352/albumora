@@ -24,8 +24,15 @@ async function fetchExtract(title: string): Promise<{ extract: string; pageUrl: 
 
     const page = res.data?.query?.pages?.[0];
     if (!page || page.missing || !page.extract) return null;
-    // Discard disambiguation pages
-    if (page.extract.startsWith('may refer to') || page.title?.includes('(disambiguation)')) return null;
+    // Discard disambiguation pages — they either have "(disambiguation)" in the title
+    // or their extract contains the "may refer to" pattern in the first line
+    const firstLine = (page.extract as string).split('\n')[0].toLowerCase();
+    if (
+      page.title?.toLowerCase().includes('disambiguation') ||
+      firstLine.includes('may refer to') ||
+      firstLine.includes('can refer to') ||
+      firstLine.includes('could refer to')
+    ) return null;
 
     return {
       extract: page.extract as string,
@@ -65,15 +72,31 @@ function parseExtract(extract: string): { intro: string; sections: WikiSection[]
   return { intro, sections };
 }
 
+function cleanTitle(title: string): string {
+  return title
+    // Remove square-bracket suffixes: [2020 Digital Master], [Deluxe Edition], etc.
+    .replace(/\s*\[[^\]]+\]/g, '')
+    // Remove parenthetical edition/remaster info but keep short tokens that
+    // could be part of the real title (we only strip if the paren content
+    // looks like edition/anniversary/remaster/version language)
+    .replace(/\s*\((?:\d+(?:th|st|nd|rd)?\s+)?(?:anniversary|deluxe|expanded|remastered?|remaster|digital\s+master|special|collector[''s]*|bonus|super\s+deluxe|legacy|complete|version|edition)[^)]*\)/gi, '')
+    .trim();
+}
+
 export async function getAlbumWikipedia(
   title: string,
   artist: string,
 ): Promise<WikiContent | null> {
-  const candidates = [
-    `${title} (album)`,
-    `${title} (${artist} album)`,
-    title,
-  ];
+  const base = cleanTitle(title);
+
+  // Build candidates from both the cleaned title and original (in case cleaning was too aggressive)
+  const seen = new Set<string>();
+  const candidates: string[] = [];
+  for (const t of [base, title]) {
+    for (const c of [`${t} (${artist} album)`, `${t} (album)`, t]) {
+      if (!seen.has(c)) { seen.add(c); candidates.push(c); }
+    }
+  }
 
   for (const candidate of candidates) {
     const result = await fetchExtract(candidate);
